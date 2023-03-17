@@ -1,0 +1,43 @@
+﻿[FunctionName("CreateDraftOrder")]
+        public async Task<IActionResult> CreateDraftOrder(
+           [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequest req,
+           ILogger log)
+        {
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var jsonObj = JObject.Parse(requestBody);
+            var shippingaddressId = (int)jsonObj["shippingaddressid"];
+            var billingaddressId = (int)jsonObj["billingaddressid"];
+
+
+            using (var client = new HttpClient())
+            {
+                var apiUrl = "https://localhost:7122/api/AddOrder/Add OrderItem?statusType=draft";
+                var jsonContent = new StringContent(requestBody, Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(apiUrl, jsonContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    dynamic responseObject = JsonConvert.DeserializeObject(responseContent);
+                    int orderId = responseObject.orderId;
+                    var OrderAddress = new OrderAddress
+                    {
+                        OrderId = orderId,
+                        AddressId = shippingaddressId,
+                    };
+                    _orderAddressRepository.Add(OrderAddress);
+
+                    var billingOrderAddress1 = new OrderAddress
+                    {
+                        OrderId = orderId,
+                        AddressId = billingaddressId,
+                    };
+                    _orderAddressRepository.Add(billingOrderAddress1);
+                    return new OkObjectResult(new { OrderId = orderId });
+                }
+                else
+                {
+                    return new BadRequestObjectResult(response.ReasonPhrase);
+                }
+            }
+        }
