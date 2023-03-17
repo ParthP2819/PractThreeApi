@@ -14,7 +14,7 @@ namespace PractThreeApi.DataAccess.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "AspNetRoles",
+                name: "AspNetRoles", 
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false)
